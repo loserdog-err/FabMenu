@@ -2,7 +2,9 @@
 fab 按钮打开 menu 的一个封装组件
 
 ##1.效果展示
-
+<img src="https://github.com/Chenantao/FabMenu/blob/master/screenshot/fade.gif" width="250" height="400">
+<img src="https://github.com/Chenantao/FabMenu/blob/master/screenshot/scheduleShow.gif" width="250" height="400">
+<img src="https://github.com/Chenantao/FabMenu/blob/master/screenshot/zhihu.gif" width=250" height="400">
 ##2.添加依赖
 ```compile 'com.chenantao:FabMenu:1.0.0'```
 
