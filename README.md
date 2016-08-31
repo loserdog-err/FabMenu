@@ -20,7 +20,7 @@ fab 按钮打开 menu 的一个封装组件
         app:mMenuItemAnim="zhihu"/>
 ```
 ##自定义属性说明
-1)mGravity:控件的位置，有四个可选值：左上(left_top),右上(right_top),左下(left_bottom),右下(right_bottom)
+1)mGravity:控件的位置，有四个可选值：`左上( left_top )`,`右上( right_top )`,`左下( left_bottom `,`右下( right_bottom )`
 2)mMenu:菜单项，跟 activity 设置 menu 一样，直接在 menu 文件夹中设置。
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -56,5 +56,5 @@ public interface FabMenuAnim {
 ```
 实现 FabMenuAnim 接口，并设置进控件即可。详情可见 libiary 动画的实现
 ```
-		mFabMenu.setMenuItemAnim(new ZhihuAnim());
+mFabMenu.setMenuItemAnim(new ZhihuAnim());
 ```
