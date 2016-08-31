@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.chenantao.fabMenu.FabMenu;
+import com.chenantao.fabMenu.anim.ZhihuAnim;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -16,6 +17,8 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mFabMenu = (FabMenu) findViewById(R.id.fabMenu);
+		mFabMenu.setMenuItemAnim(new ZhihuAnim());
+
 		mFabMenu.setOnMenuItemClickListener(new FabMenu.OnMenuClickListener() {
 			@Override
 			public void onMenuItemClick(View view, String title) {

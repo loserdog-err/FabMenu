@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group >
-
-        <item
-            android:id="@+id/menu_ask"
-            android:icon="@mipmap/menu1"
-            android:title="提问"/>
-        <item
-            android:id="@+id/menu_answer"
-            android:icon="@mipmap/menu2"
-            android:title="回答"/>
-        <item
-            android:id="@+id/menu_write"
-            android:icon="@mipmap/menu3"
-            android:title="写文章"/>
-    </group>
-
+    <item
+        android:id="@+id/menu_ask"
+        android:icon="@mipmap/menu1"
+        android:title="提问"/>
+    <item
+        android:id="@+id/menu_answer"
+        android:icon="@mipmap/menu2"
+        android:title="回答"/>
+    <item
+        android:id="@+id/menu_write"
+        android:icon="@mipmap/menu3"
+        android:title="写文章"/>
 </menu>
