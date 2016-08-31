@@ -2,6 +2,8 @@ package com.chenantao.fabMenu;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
@@ -10,6 +12,7 @@ import android.graphics.Rect;
 import android.support.v7.view.SupportMenuInflater;
 import android.support.v7.view.menu.MenuBuilder;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +21,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.chenantao.fabMenu.anim.FadeAnim;
+import com.chenantao.fabMenu.anim.ScheduleShowAnim;
+import com.chenantao.fabMenu.anim.ZhihuAnim;
 
 
 /**
@@ -35,6 +42,7 @@ public class FabMenu extends ViewGroup {
 
 	public static final int ANIM_FADE = 0;//淡入淡出动画
 	public static final int ANIM_ZHIHU = 1;//仿知乎动画
+	public static final int ANIM_SCHEDULE_SHOW = 2;//顺序出现
 
 	private static final int BORDER_ICON_WIDTH = 8;//dp
 	private static final int BORDER_FAB_WIDTH = 6;//dp
@@ -60,8 +68,10 @@ public class FabMenu extends ViewGroup {
 	private Rect mTouchRect;//这个 View 因为需要一层遮罩层，所以是强制占满全屏，mTouchRect 是可见的大小
 
 	private OnMenuClickListener mListener;
+//	private FabMenuAnim mAnim;
 
-	private FabMenuAnim mAnim;
+	private FabMenuAnim mMenuAnimator;
+	private Animator mCurrentAnimator;
 
 	public FabMenu(Context context) {
 		this(context, null);
@@ -92,13 +102,16 @@ public class FabMenu extends ViewGroup {
 	private void initAnim(int anim) {
 		switch (anim) {
 			case ANIM_FADE:
-				mAnim = new FadeAnim();
+				mMenuAnimator = new FadeAnim();
 				break;
 			case ANIM_ZHIHU:
-				mAnim = new ZhihuAnim();
+				mMenuAnimator = new ZhihuAnim();
+				break;
+			case ANIM_SCHEDULE_SHOW:
+				mMenuAnimator = new ScheduleShowAnim();
 				break;
 			default:
-				mAnim = new FadeAnim();
+				mMenuAnimator = new FadeAnim();
 		}
 	}
 
@@ -169,7 +182,7 @@ public class FabMenu extends ViewGroup {
 		for (int i = 0; i < childCount; i++) {
 			measureChildWithMargins(getChildAt(i), widthMeasureSpec, 0, heightMeasureSpec, 0);
 		}
-		setMeasuredDimension(Utils.getScreenWidth(getContext()), Utils.getScreenHeight(getContext()));
+		setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
 	}
 
 	@Override
@@ -189,7 +202,7 @@ public class FabMenu extends ViewGroup {
 					} else {
 						int menuLeft = (int) (mFab.getX() + (mFab.getMeasuredWidth() - mMenuIconWidth) / 2);
 						int menuRight = menuLeft + child.getMeasuredWidth();
-						maxRight = maxRight > menuRight ? maxRight : menuRight;
+						maxRight = Math.max(maxRight, menuRight);
 						child.layout(menuLeft, top, menuRight, top + child.getMeasuredHeight());
 					}
 					top += child.getMeasuredHeight();
@@ -197,32 +210,44 @@ public class FabMenu extends ViewGroup {
 					mTouchRect.set(left, (int) mFab.getY(), maxRight, top);
 					break;
 				case GRAVITY_RIGHT_TOP:
-					int maxLeft = 0;
+					int minLeft = 9999;
 					if (i == 0) {
 						child.layout(right - child.getMeasuredWidth(), top, right, top + child.getMeasuredHeight());
 					} else {
 						int menuRight = (int) (mFab.getX() + (mFab.getMeasuredWidth() + mMenuIconWidth) / 2);
-						child.layout(menuRight - child.getMeasuredWidth(), top, menuRight, top + child.getMeasuredHeight());
+						int menuLeft = menuRight - child.getMeasuredWidth();
+						minLeft = Math.min(menuLeft, minLeft);
+						child.layout(menuLeft, top, menuRight, top + child.getMeasuredHeight());
 					}
 					top += child.getMeasuredHeight();
+					mTouchRect.set(minLeft, (int) mFab.getY(), right, top);
 					break;
 				case GRAVITY_LEFT_BOTTOM:
+					maxRight = 0;
 					if (i == 0) {
 						child.layout(left, bottom - child.getMeasuredHeight(), left + child.getMeasuredWidth(), bottom);
 					} else {
 						int menuLeft = (int) (mFab.getX() + (mFab.getMeasuredWidth() - mMenuIconWidth) / 2);
+						int menuRight = menuLeft + child.getMeasuredWidth();
+						maxRight = Math.max(maxRight, menuRight);
 						child.layout(menuLeft, bottom - child.getMeasuredHeight(), menuLeft + child.getMeasuredWidth(), bottom);
 					}
 					bottom -= child.getMeasuredHeight();
+					//计算实际可操作的区域大小
+					mTouchRect.set(left, bottom, maxRight, b - getPaddingBottom());
 					break;
 				case GRAVITY_RIGHT_BOTTOM:
+					minLeft = 9999;
 					if (i == 0) {
 						child.layout(right - child.getMeasuredWidth(), bottom - child.getMeasuredHeight(), right, bottom);
 					} else {
 						int menuRight = (int) (mFab.getX() + (mFab.getMeasuredWidth() + mMenuIconWidth) / 2);
+						int menuLeft = menuRight - child.getMeasuredWidth();
+						minLeft = Math.min(menuLeft, minLeft);
 						child.layout(menuRight - child.getMeasuredWidth(), bottom - child.getMeasuredHeight(), menuRight, bottom);
 					}
 					bottom -= child.getMeasuredHeight();
+					mTouchRect.set(minLeft, bottom, right, b - getPaddingBottom());
 					break;
 			}
 		}
@@ -232,38 +257,57 @@ public class FabMenu extends ViewGroup {
 		if (mFab == null) {
 			return;
 		}
+		if (mCurrentAnimator != null && mCurrentAnimator.isStarted()) {
+			mCurrentAnimator.cancel();
+		}
 		if (withAnim) {
-			float degree = mIsMenuOpen ? 0.0f : -45.0f;
-			mFab.animate().rotation(degree).setDuration(DURATION_ANIM).setListener(new AnimatorListenerAdapter() {
-				@Override
-				public void onAnimationEnd(Animator animation) {
-					mIsMenuOpen = !mIsMenuOpen;
-				}
-			}).start();
+			mIsMenuOpen = !mIsMenuOpen;
+			//menu 将要打开
+			float degree = mIsMenuOpen ? -45f : 0f;
+			AnimatorSet set = new AnimatorSet();
+			mCurrentAnimator = set;
+			Animator fabAnimator = ObjectAnimator.ofFloat(mFab, "rotation", degree);
+			AnimatorSet.Builder animBuilder = set.play(fabAnimator);
 			for (int i = 0; i < getChildCount(); i++) {
 				if (i != 0) {
 					final ViewGroup view = (ViewGroup) getChildAt(i);
-					if (mIsMenuOpen) {//close
-						setBackgroundColor(Color.TRANSPARENT);
-						mAnim.closeAnim(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE));
-					} else {//open
+					if (!mIsMenuOpen) {//should close
+						animBuilder.with(mMenuAnimator.provideCloseAnimator(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE), i - 1));
+					} else {//should open
 						setBackgroundColor(0x750a0a0a);
 						view.setVisibility(VISIBLE);
-						mAnim.openAnim(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE));
+						animBuilder.with(mMenuAnimator.provideOpenAnimator(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE), i - 1));
 					}
 				}
 			}
+			set.addListener(new AnimatorListenerAdapter() {
+				@Override
+				public void onAnimationEnd(Animator animation) {
+					if (!mIsMenuOpen) {
+						setBackgroundColor(Color.TRANSPARENT);
+					}
+				}
+			});
+			set.setDuration(mMenuAnimator.provideAnimDuration());
+			set.start();
 		}
 	}
 
 	public void setMenuItemAnim(FabMenuAnim anim) {
 		if (anim != null) {
-			this.mAnim = anim;
+			this.mMenuAnimator = anim;
 		}
 	}
 
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev) {
+		Log.d(TAG, "onInterceptTouchEvent:" + mTouchRect);
+		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+			//当前菜单打开，且触摸区域没在菜单范围内，则关闭菜单
+			if (!mTouchRect.contains((int) ev.getX(), (int) ev.getY()) && mIsMenuOpen) {
+				toggleMenu(true);
+			}
+		}
 		return super.onInterceptTouchEvent(ev);
 	}
 

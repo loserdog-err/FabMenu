@@ -12,8 +12,8 @@
         android:paddingBottom="10dp"
         android:paddingRight="10dp"
         android:paddingTop="10dp"
-        app:mGravity="LEFT_TOP"
+        app:mGravity="left_top"
         app:mMenu="@menu/menu"
-        app:mMenuItemAnim="ZHIHU"/>
+        app:mMenuItemAnim="scheduleShow"/>
 
 </RelativeLayout>
