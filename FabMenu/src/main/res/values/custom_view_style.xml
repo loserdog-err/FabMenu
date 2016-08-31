@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="FabMenu">
+        <attr name="mBorderWidth" format="dimension"/>
+        <attr name="mMenu" format="reference"/>
+        <attr name="mGravity" format="enum">
+            <enum name="LEFT_TOP" value="0"/>
+            <enum name="RIGHT_TOP" value="1"/>
+            <enum name="LEFT_BOTTOM" value="2"/>
+            <enum name="RIGHT_BOTTOM" value="3"/>
+        </attr>
+        <attr name="mMenuItemAnim">
+            <enum name="FADE" value="0"/>
+            <enum name="ZHIHU" value="1"/>
+        </attr>
+    </declare-styleable>
+</resources>
