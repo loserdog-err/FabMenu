@@ -27,8 +27,8 @@ public class ScheduleShowAnim implements FabMenuAnim {
 			ObjectAnimator.ofFloat(menuItem, "scaleY", 0f, 1f)
 		);
 		set.setInterpolator(new OvershootInterpolator());
-		set.setStartDelay(index * 100);
-		set.setDuration(300);
+		set.setStartDelay(index * 50);
+		set.setDuration(200);
 		return set;
 	}
 
@@ -39,13 +39,13 @@ public class ScheduleShowAnim implements FabMenuAnim {
 			ObjectAnimator.ofFloat(menuItem, "scaleX", 1f, 0f),
 			ObjectAnimator.ofFloat(menuItem, "scaleY", 1f, 0f)
 		);
-		set.setStartDelay(300 - index * 100);
-		set.setDuration(300);
+		set.setStartDelay(200 - index * 50);
+		set.setDuration(200);
 		return set;
 	}
 
 	@Override
 	public long provideAnimDuration() {
-		return 300;
+		return 200;
 	}
 }

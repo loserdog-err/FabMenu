@@ -49,6 +49,8 @@ public class FabMenu extends ViewGroup {
 
 	private static final int MENU_LINE_SPACE = 10;//DP
 
+	public static final int COLOR_MASK = 0xb4000000;
+
 	private static final String TAG_ICON = "icon";
 	private static final String TAG_TITLE = "title";
 
@@ -142,7 +144,7 @@ public class FabMenu extends ViewGroup {
 			llMenuWrap.setGravity(Gravity.CENTER);
 			llMenuWrap.setOrientation(LinearLayout.HORIZONTAL);
 			//标题 view
-			TextView tvTitle = new TextView(getContext());
+			final TextView tvTitle = new TextView(getContext());
 			tvTitle.setPadding(Utils.dp2px(10), Utils.dp2px(5), Utils.dp2px(10), Utils.dp2px(5));
 			tvTitle.setText(item.getTitle());
 			tvTitle.setBackground(getResources().getDrawable(R.drawable.title_bg));
@@ -166,6 +168,7 @@ public class FabMenu extends ViewGroup {
 			llMenuWrap.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
+					toggleMenu(true);
 					if (mListener != null) {
 						mListener.onMenuItemClick(v, item.getTitle().toString());
 					}
@@ -264,7 +267,7 @@ public class FabMenu extends ViewGroup {
 			mIsMenuOpen = !mIsMenuOpen;
 			//menu 将要打开
 			float degree = mIsMenuOpen ? -45f : 0f;
-			AnimatorSet set = new AnimatorSet();
+			final AnimatorSet set = new AnimatorSet();
 			mCurrentAnimator = set;
 			Animator fabAnimator = ObjectAnimator.ofFloat(mFab, "rotation", degree);
 			AnimatorSet.Builder animBuilder = set.play(fabAnimator);
@@ -274,7 +277,7 @@ public class FabMenu extends ViewGroup {
 					if (!mIsMenuOpen) {//should close
 						animBuilder.with(mMenuAnimator.provideCloseAnimator(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE), i - 1));
 					} else {//should open
-						setBackgroundColor(0x750a0a0a);
+						setBackgroundColor(COLOR_MASK);
 						view.setVisibility(VISIBLE);
 						animBuilder.with(mMenuAnimator.provideOpenAnimator(view, view.findViewWithTag(TAG_ICON), view.findViewWithTag(TAG_TITLE), i - 1));
 					}
@@ -300,15 +303,16 @@ public class FabMenu extends ViewGroup {
 	}
 
 	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		Log.d(TAG, "onInterceptTouchEvent:" + mTouchRect);
+	public boolean onTouchEvent(MotionEvent ev) {
 		if (ev.getAction() == MotionEvent.ACTION_DOWN) {
 			//当前菜单打开，且触摸区域没在菜单范围内，则关闭菜单
 			if (!mTouchRect.contains((int) ev.getX(), (int) ev.getY()) && mIsMenuOpen) {
 				toggleMenu(true);
+				Log.d(TAG, "onInterceptTouchEvent");
+				return true;
 			}
 		}
-		return super.onInterceptTouchEvent(ev);
+		return super.onTouchEvent(ev);
 	}
 
 	public void setOnMenuItemClickListener(OnMenuClickListener listener) {
